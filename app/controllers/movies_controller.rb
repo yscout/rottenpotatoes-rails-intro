@@ -16,7 +16,13 @@ class MoviesController < ApplicationController
         @all_ratings
       end
 
+    @sort_by = params[:sort_by]
+
     @movies = Movie.with_ratings(@ratings_to_show)
+    allowed_sort_columns = %w[title release_date]
+    if @sort_by.present? && allowed_sort_columns.include?(@sort_by)
+      @movies = @movies.order(@sort_by => :asc)
+    end
   end
 
   def new
