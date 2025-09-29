@@ -9,6 +9,11 @@ class MoviesController < ApplicationController
   def index
     @all_ratings = Movie.all_ratings
 
+    if params[:ratings].blank? && params[:sort_by].blank? &&
+      (session[:ratings].present? || session[:sort_by].present?)
+     redirect_to movies_path(sort_by: session[:sort_by], ratings: session[:ratings]) and return
+    end
+
     @ratings_to_show =
       if params[:ratings].present?
         params[:ratings].keys
@@ -16,13 +21,14 @@ class MoviesController < ApplicationController
         @all_ratings
       end
 
-    @sort_by = params[:sort_by]
+    allowed_sort_columns = %w[title release_date]
+    @sort_by = allowed_sort_columns.include?(params[:sort_by]) ? params[:sort_by] : nil
 
     @movies = Movie.with_ratings(@ratings_to_show)
-    allowed_sort_columns = %w[title release_date]
-    if @sort_by.present? && allowed_sort_columns.include?(@sort_by)
-      @movies = @movies.order(@sort_by => :asc)
-    end
+    @movies = @movies.order(@sort_by => :asc) if @sort_by.present?
+
+    session[:ratings] = @ratings_to_show.map { |r| [r, '1'] }.to_h
+    session[:sort_by] = @sort_by
   end
 
   def new
